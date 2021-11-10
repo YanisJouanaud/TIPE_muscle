@@ -1,65 +1,73 @@
 import numpy as np
-#import matplotlib.pyplot as plt
-from animate_bulle import anim_expansion
-#On considère ici une bulle constituée d'un gaz parfait dans un solide elastique
-#  chauffée à même la résistance et dont la perte calorifique suit la loi de
-#  refroidissement de Newton.
+import matplotlib.pyplot as plt
 
 
+# ======= CONSTANTES ==========
 
-def rtoV(r):
-    return 4/3*np.pi*r**3
+n = 5*10**(-3)  # Quantité de matière en mol
+rs = 1  # Résistance du fil en ohm
+r_th = 90  # Résistance thermique
+C = 2092*0.1  # Capacité thermique (en J/K)
+R = 8.314  # constante des gazs parfaits
+I = 1  # Intensité (en A)
+T_ext = 293  # Température exterieure (en K)
+r_ini = 0.001   # Rayon initiale de la bulle (en m)
+P_ext = 10**5  # Pression extèrieure (en bar)
+m_young = 0.5*10**6  # Module de Young (N/m)
+M = 46.1  # Masse molaire de l'ethanol (g.mol-1)
+L_v = 843 # Enthalpie de vaporisation (J.g-1)
+T0 = 351.6 #température de vaporisation (K)
+rho = 789*10**3 #masse volumique (g.mol-1)
 
-def init():
-    return {"n":5*(10**-3),"Rs":1,"Rth":90,"I":1,"C":2092*0.1,"Text":293,"r_ini":0.001,"P_ext":10**5,"Mod_Young":0.5*10**6}
+def newton(f, df, ini, epsilon, T):
+    x = ini
+    while abs(f(x, T)) > epsilon:
+        if df(x, T) != 0 :
+            x -= f(x, T) / (df(x, T))
 
-def f(x,T):
-    dic=init()
-    return -dic["P_ext"]*x**3-2*dic["Mod_Young"]*x**2+3*dic["n"]*8.314*T/(4*np.pi)
-
-def Df(x) :
-    dic=init()
-    return -3*dic["P_ext"]*x**2-4*dic["Mod_Young"]*x
-
-def temperature(t) :
-    dic=init()
-    Rs,Rth,I,C,Text = dic["Rs"],dic["Rth"],dic["I"],dic["C"],dic["Text"]
-    return (Rs * Rth * (I ** 2) * (1 - np.exp(-(1 / Rth * C) * t)) + Text)
-    
-def radius(P, r):
-    dic=init()
-    n,Pext, Mod_Young = dic["n"], dic["P_ext"], dic["Mod_Young"]
-    T=P*(4/3)*np.pi*r**3/(8.314*n)
-    while abs(P-Pext)>2*Mod_Young/r :
-        r+=0.00001
-        P=n*R*T/((4/3)*np.pi*r**3)
-    return r
-
-def newton(f, df, T, ini, epsilon) : #prend un parametre T en plus des parametres usuels
-    x=ini
-    while abs(f(x, T))>epsilon :
-        if df(x)!=0 :
-            x=x-f(x,T)/(df(x))
         else :
-            x=x-f(x,T)/(df(x)-10**(-6))
+            x -= f(x, T) / (df(x, T) - epsilon)
+
     return x
 
-def expansion(t): #t doit ici être un linspace
-    dic=init()
-    epsilon=10**(-6)
-    r=[newton(f, Df, dic["Text"], 0, epsilon)]
-    for i in t:
-        temp=temperature(i)
-        r.append(newton(f, Df, temp, r[-1], epsilon))
-        print(temp)
-    return r
 
-def get_radius_expansion(t):
-    if type(t) == int or type(t) == float :
-        T=np.linspace(0,t,100000)
-        return expansion(T)[-1]
+def f(x, T):
+    p_sat = 10**5*10**(M/R*L_v*(1/T0-1/T))  #formule de Dupré simplifié
+    n_v = p_sat*4/3*np.pi*x**3/(R*T)
+    if n_v<n :
+        return n_v*R*T*x - 2* m_young*(4/3 * np.pi * x**3 - (n - n_v)*M / rho)  #chgmt d'etat
     else :
-        return expansion(t)
+        return -P_ext*(x**3) - 2*m_young*(x**2) + 3*n*R*T/(4*np.pi)  #gaz parfait
 
-print(expansion(np.linspace(0,10,1000)))
-anim_expansion(get_radius_expansion)
+
+def df(x, T):
+    p_sat = 10**5*10**(M/R*L_v*(1/T0-1/T))  #formule de Dupré simplifié
+    n_v = p_sat*4/3*np.pi*x**3/(R*T)
+    if n_v<n :
+        return p_sat*16/3*np.pi*x**3 - 2*m_young*(4*np.pi*x**2+p_sat*4*np.pi*M*x**2/(rho*R*T))
+    else :
+        return -3*P_ext*x**2 - 4*m_young*x
+
+
+def temperature(t):
+    ''' Retourne la température en fonction du temps'''
+    return T_ext + rs * r_th * (I ** 2) * (1 - np.exp(-t*C / r_th))
+
+
+def get_radius_list(t):
+    ''' Retourne la liste des rayons de la bulle au cours du temps'''
+    epsilon=10**(-6)
+    r_list = [newton(f, df, 0, epsilon, T_ext)]
+
+    for i in t[1:]:
+        temp = temperature(i)
+        r_list.append(newton(f, df, r_list[-1], epsilon, temp))
+
+    return r_list
+
+
+lin = np.linspace(0, 10, 1000)
+radius_list = get_radius_list(lin)
+
+plt.plot(lin, radius_list)
+plt.show()
