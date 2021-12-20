@@ -8,10 +8,10 @@ class fil :
 class muscle:
     #muscle consitué de bulles et traversé par un fil
     active = 0
-    def __init__(self, taille, bulles, tension, resthermique):
+    def __init__(self, taille, bulles, intensite, resthermique):
         self.size = taille
         self.bubbles = bulles
-        self.exp = tension
+        self.exp = intensite
         self.rth = resthermique
 
     def generate(self, distribution):
@@ -23,3 +23,5 @@ class bulle:
     def __init__(self, taille, gaz):
         self.rad = taille
         self.gaz = gaz
+    
+    
