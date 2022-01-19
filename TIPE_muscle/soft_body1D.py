@@ -20,7 +20,7 @@ rayon = np.array([get_radius_list(T)])
 n = 100
 
 def long(rayon) :
-    return (k*l0 + 2*K*(np.sum(rayon[-1]) - L0))/(k + (2*n-1)*K)
+    return (k*l0 - 2*K*(np.sum(rayon[-1]) - L0))/(k + (2*n-1)*K)
 
 def taille(rayon) :
     return n*long(rayon) + np.sum(rayon[-1])
