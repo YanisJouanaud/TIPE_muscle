@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from bulle import *
 
+#Soft body dans le cas quasi-statique en 1 dimension. 
+#On considère ici que les bulles sont equidistantes, on néglige toute force extérieur.
+
 ##Constantes :
 
 m_young = (10**(-3))/(4*32)
