@@ -28,21 +28,21 @@ last_time = None
 etats = []
 
 
-def newton(f, df, ini, epsilon, T):
+def newton(f, df, ini, epsilon, T, m_young):
     x = ini
-    while abs(f(x, T)) > epsilon:
-        if df(x, T) != 0 :
-            x -= f(x, T) / (df(x, T))
+    while abs(f(x, T, m_young)) > epsilon:
+        if df(x, T, m_young) != 0 :
+            x -= f(x, T, m_young) / (df(x, T, m_young))
 
         else :
-            x -= f(x, T) / (df(x, T) - epsilon)
+            x -= f(x, T, m_young) / (df(x, T, m_young) - epsilon)
     if x>0.0001 :
         return x
     else : 
-        return newton(f, df, ini+0.1, epsilon, T)
+        return newton(f, df, ini+0.1, epsilon, T, m_young)
 
 
-def f(x, T):
+def f(x, T, m_young):
     global etats
     #p_sat = (10**5)*np.exp(M*L_v*((1/T0)-(1/T))/R)  #formule de Dupré simplifié
     p_sat = (10**5)*10**(5.24677-1598.673/(T-46.424))  #formule d'Antoine
@@ -74,9 +74,9 @@ def f(x, T):
 
 
 
-def df(x, T):
+def df(x, T, m_young):
     h=10**-9
-    return (f(x+h, T)-f(x, T))/h
+    return (f(x+h, T, m_young)-f(x, T, m_young))/h
 
 
 def temperature(t):
@@ -89,68 +89,67 @@ def get_radius_list(t):
     ''' Retourne la liste des rayons de la bulle au cours du temps'''
     epsilon=10**(-9)
     last_time = t[0]
-    r_list = [newton(f, df, 0.1, epsilon, T_ext)]
+    r_list = [newton(f, df, 0.1, epsilon, T_ext, m_young)]
     temp=293
-    print("hello3", r_list)
     for i in t[1:]:
         last_time = i
         p_sat = (10**5)*10**(5.24677-1598.673/(temp-46.424)) #formule d'Antoine
         n_v = p_sat*(4/3)*np.pi*(r_list[-1]**3)/(R*temp)
         #print(r_list[-1])
         temp = temperature(i)
-        r_list.append(newton(f, df, r_list[-1], epsilon, temp))
+        r_list.append(newton(f, df, r_list[-1], epsilon, temp, m_young))
 
     return r_list
 
+if __name__=='__main__' :
+    lin = np.linspace(0, 300, 10000)
+    #lin = np.linspace(0, 25, 10000)
+    radius_list = get_radius_list(lin)
+    temperature_list = temperature(lin)
 
-lin = np.linspace(0, 300, 10000)
-#lin = np.linspace(0, 25, 10000)
-radius_list = get_radius_list(lin)
-temperature_list = temperature(lin)
 
+    fig, (ax1, ax2) = plt.subplots(1, 2)
 
-fig, (ax1, ax2) = plt.subplots(1, 2)
+    ax1.plot(lin, radius_list, label='Rayon de la bulle')
+    ax1.set_xlabel('Temps t (en s)')
+    ax1.set_ylabel('Rayon r (en mm)')
+    ax1.grid()
 
-ax1.plot(lin, radius_list, label='Rayon de la bulle')
-ax1.set_xlabel('Temps t (en s)')
-ax1.set_ylabel('Rayon r (en mm)')
-ax1.grid()
+    ax2.plot(lin, temperature_list, label='Température du milieu', color='r')
+    ax2.set_xlabel('Temps t (en s)')
+    ax2.set_ylabel('Température T (en K)')
+    ax2.grid()
 
-ax2.plot(lin, temperature_list, label='Température du milieu', color='r')
-ax2.set_xlabel('Temps t (en s)')
-ax2.set_ylabel('Température T (en K)')
-ax2.grid()
+    fig.legend()
 
-fig.legend()
+    print(etats)
 
-print(etats)
+    for i in range(len(etats) - 1):
+        etat_1, t1 = etats[i]
+        etat_2, t2 = etats[i + 1]
 
-for i in range(len(etats) - 1):
-    etat_1, t1 = etats[i]
-    etat_2, t2 = etats[i + 1]
+        print(etat_1, etat_2, t1, t2)
 
-    print(etat_1, etat_2, t1, t2)
+        if etat_1 == 'Changement':
+            ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
+            ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
+            # ax1.axvline(x=t, color='r')
+            # ax1.text(t, average, 'Changement état', rotation='vertical', color='r')
 
-    if etat_1 == 'Changement':
-        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
-        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
-        # ax1.axvline(x=t, color='r')
-        # ax1.text(t, average, 'Changement état', rotation='vertical', color='r')
+        else:
+            ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
+            ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
+            # ax1.axvline(x=t, color='b')
+            # ax1.text(t, average, 'Gaz parfait', rotation='vertical', color='b')
+
+    etat_f, tf = etats[-1]
+
+    if etat_f == 'Changement':
+        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='red', alpha=0.5)
+        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='red', alpha=0.5)
 
     else:
-        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
-        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
-        # ax1.axvline(x=t, color='b')
-        # ax1.text(t, average, 'Gaz parfait', rotation='vertical', color='b')
+        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='blue', alpha=0.5)
+        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='blue', alpha=0.5)
 
-etat_f, tf = etats[-1]
-
-if etat_f == 'Changement':
-    ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='red', alpha=0.5)
-    ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='red', alpha=0.5)
-
-else:
-    ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='blue', alpha=0.5)
-    ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='blue', alpha=0.5)
-
-plt.show()
+    plt.show()
