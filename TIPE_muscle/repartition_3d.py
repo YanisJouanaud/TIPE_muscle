@@ -5,19 +5,20 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
 
-T_ini = 25
+T_ini = 25+273
 A = 75
 B = 70
 K = (4 / 9)
 
 nb_points = 5000
-
+R_ressort=0.002
 
 def chaleur(pos, t):
 	# Chaleur en fonction de la distance à la tige et du temps
 	# Exponentielle décroissante avec décroissance en K/r pour la distance à l'axe
 	# Réglage pour avoir une température max en environ 3 mn (Tmax = 100 pour R = 0 et Tmax = 70 pour R = Rmax = environ 1.5 cm)  (à ajuster avec les valeurs expérimentales)
-	x,y,z = np.zeros_like(pos), np.zeros_like(pos), np.zeros_like(pos)
+	n = np.ndim(pos)-1
+	x,y,z = np.zeros_like(pos, dtype=float), np.zeros_like(pos, dtype=float), np.zeros_like(pos, dtype=float)
 	for i in range(np.size(pos)) :
 		x.flat[i], y.flat[i], z.flat[i] = pos.flat[i][0], pos.flat[i][1], pos.flat[i][2]
 	result = np.zeros_like(x)
@@ -25,15 +26,14 @@ def chaleur(pos, t):
 	
 	for index, rayon in enumerate(r.flat):
 		if rayon > R_ressort:
-			result[index] = T_ini + A*(1 - np.exp(-t/B)) / (K*(rayon - R_ressort) + 1)
+			result.flat[index] = T_ini + A*(1 - np.exp(-t/B)) / (K*(10**2)*(rayon - R_ressort) + 1)
 		
 		else:
-			result[index] = T_ini + Ap*(1 - np.exp(-t/Bp)) / (Kp*(R_ressort - rayon) + 1)
-	
+			result.flat[index] = T_ini + A*(1 - np.exp(-t/B)) / (K*(10**2)*(R_ressort - rayon) + 1)
 	return result
 
 if __name__=='__main__' :
-	# Parallépipède de 6 cm de longueur, 3 de largeur, 3 de hauteur
+	# Parallélépipède de 6 cm de longueur, 3 de largeur, 3 de hauteur
 	X = np.linspace(-1.5, 1.5, nb_points)
 	Y = np.linspace(0, 6, nb_points)
 	Z = np.linspace(-1.5, 1.5, nb_points)

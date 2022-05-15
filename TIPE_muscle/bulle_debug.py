@@ -3,21 +3,21 @@ import matplotlib.pyplot as plt
 
 # ======= CONSTANTES ==========
 
-n = 5*10**(-3)  # Quantité de matière en mol
+n = 5*10**(-6)  # Quantité de matière en mol
 rs = 1  # Résistance du fil en ohm
-r_th = 90  # Résistance thermique
-C = 2092*0.003  # Capacité thermique (en J/K)
+r_th = 50  # Résistance thermique
+C = 0.3  *2092*0.003  # Capacité thermique (en J/K)
 R = 8.314  # constante des gazs parfaits
-I = 1  # Intensité (en A)
+I = 1.0  # Intensité (en A)
 T_ext = 293  # Température exterieure (en K)
 r_ini = 0.001   # Rayon initiale de la bulle (en m)
 P_ext = 10**5  # Pression extérieure (en Pa)
 m_young = (10**-3)/(4*32)  # Module de Young (N/m) https://www.editions-ellipses.fr/PDF/9782340005549_extrait.pdf http://fltsi.fr/tsi/tsi2/Cours%20et%20TD%20par%20Domaines%20de%20Competence_TSI2/DC25_Solides%20deformables_RDM/PARTIE%201%20Introduction%20RdM/Valeurs%20num%C3%A9riques%20de%20modules%20de%20Young.pdf
 M = 46.1  # Masse molaire de l'ethanol (g.mol-1)
-L_v = 843 # Enthalpie de vaporisation (J.g-1)
+L_v = 843  # Enthalpie de vaporisation (J.g-1)
 T0 = 351.6 #température de vaporisation (K)
 rho = 789*10**3 #masse volumique (g.mol-1)
-R0 = 0.5 * (10**-3) #taille initiale de la bulle (m)
+R0 = 1 * (10**-3) #taille initiale de la bulle (m)
 G = 10**-3  #module de cisaillement
 
 # ====== Info de debug =========
@@ -36,7 +36,7 @@ def newton(f, df, ini, epsilon, T, m_young):
 
         else :
             x -= f(x, T, m_young) / (df(x, T, m_young) - epsilon)
-    if x>0.0001 :
+    if x>0.00001 :
         return x
     else : 
         return newton(f, df, ini+0.1, epsilon, T, m_young)
@@ -87,7 +87,7 @@ def temperature(t):
 def get_radius_list(t):
     global last_time
     ''' Retourne la liste des rayons de la bulle au cours du temps'''
-    epsilon=10**(-9)
+    epsilon=10**(-12)
     last_time = t[0]
     r_list = [newton(f, df, 0.1, epsilon, T_ext, m_young)]
     temp=293
@@ -130,26 +130,26 @@ if __name__=='__main__' :
 
         print(etat_1, etat_2, t1, t2)
 
-        if etat_1 == 'Changement':
-            ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
-            ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
+        #if etat_1 == 'Changement':
+            #ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
+            #ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='red', alpha=0.5)
             # ax1.axvline(x=t, color='r')
             # ax1.text(t, average, 'Changement état', rotation='vertical', color='r')
 
-        else:
-            ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
-            ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
+        #else:
+            #ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
+            #ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > t1) & (lin <= t2), color='blue', alpha=0.5)
             # ax1.axvline(x=t, color='b')
             # ax1.text(t, average, 'Gaz parfait', rotation='vertical', color='b')
 
     etat_f, tf = etats[-1]
 
-    if etat_f == 'Changement':
-        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='red', alpha=0.5)
-        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='red', alpha=0.5)
+    # if etat_f == 'Changement':
+    #     ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='red', alpha=0.5)
+    #     ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='red', alpha=0.5)
 
-    else:
-        ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='blue', alpha=0.5)
-        ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='blue', alpha=0.5)
+    # else:
+    #     ax1.fill_between(lin, max(radius_list), min(radius_list), where = (lin > tf), color='blue', alpha=0.5)
+    #     ax2.fill_between(lin, max(temperature_list), min(temperature_list), where = (lin > tf), color='blue', alpha=0.5)
 
     plt.show()
