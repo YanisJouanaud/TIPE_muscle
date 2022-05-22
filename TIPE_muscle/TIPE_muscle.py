@@ -114,15 +114,18 @@ def main() :
     muscle1.generate((0,0,0))
     print(muscle1.vol)
     y = []
-    t = np.linspace(0,500,5000)
+    t = np.linspace(0,150,800)
     for i in tqdm(t) :
         muscle1.gonflement(i)
         a = np.empty(1, dtype=object)
         a[0] = tuple(muscle1.maille[0][0][0].pos)
-        y.append(muscle1.vol)
+        y.append(muscle1.maille[0][0][0].rad/3+0.00045)
     return t,y
 
 if __name__=='__main__' :
     t,y=main()
     plt.plot(t,y)
+    plt.xlabel("Temps en s")
+    plt.ylabel("Rayon en m")
+    plt.grid()
     plt.show()
